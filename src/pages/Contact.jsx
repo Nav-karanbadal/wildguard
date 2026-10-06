@@ -99,7 +99,7 @@ function Contact() {
 
     try {
       const response = await fetch(
-        "http://localhost:5000/api/contact",
+        "https://wildguard-m4j5.onrender.com/api/contact",
         {
           method: "POST",
           headers: {

@@ -254,7 +254,7 @@ function JoinTeam() {
 
     try {
       const response = await fetch(
-        "http://localhost:5000/api/join",
+        "https://wildguard-m4j5.onrender.com/api/join",
         {
           method: "POST",
           headers: {

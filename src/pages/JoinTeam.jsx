@@ -1,4 +1,5 @@
 import { useState } from "react"
+
 import {
   FaHandsHelping,
   FaLeaf,
@@ -9,6 +10,7 @@ import {
 import joinTeamImage from "../assets/images/services/jointeam.jpg"
 
 // ================= COUNTRY =================
+
 const countries = [
   {
     name: "India",
@@ -17,6 +19,7 @@ const countries = [
 ]
 
 // ================= STATES & CITIES =================
+
 const locations = {
   India: {
     Punjab: [
@@ -97,6 +100,7 @@ const locations = {
 }
 
 // ================= COMPONENT =================
+
 function JoinTeam() {
   const [formData, setFormData] = useState({
     name: "",
@@ -112,8 +116,10 @@ function JoinTeam() {
 
   const [errors, setErrors] = useState({})
   const [submitted, setSubmitted] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
 
   // ================= HANDLE INPUT =================
+
   const handleChange = (e) => {
     const { name, value } = e.target
 
@@ -125,10 +131,12 @@ function JoinTeam() {
     setErrors((prev) => ({
       ...prev,
       [name]: "",
+      submit: "",
     }))
   }
 
   // ================= HANDLE COUNTRY =================
+
   const handleCountryChange = (e) => {
     const selectedCountry = e.target.value
 
@@ -149,10 +157,12 @@ function JoinTeam() {
       country: "",
       state: "",
       city: "",
+      submit: "",
     }))
   }
 
   // ================= HANDLE STATE =================
+
   const handleStateChange = (e) => {
     const selectedState = e.target.value
 
@@ -166,10 +176,12 @@ function JoinTeam() {
       ...prev,
       state: "",
       city: "",
+      submit: "",
     }))
   }
 
   // ================= VALIDATION =================
+
   const validateForm = () => {
     const newErrors = {}
 
@@ -230,34 +242,82 @@ function JoinTeam() {
   }
 
   // ================= SUBMIT =================
-  const handleSubmit = (e) => {
+
+  const handleSubmit = async (e) => {
     e.preventDefault()
 
     if (!validateForm()) {
       return
     }
 
-    console.log("Volunteer Application:", formData)
+    setSubmitting(true)
 
-    setSubmitted(true)
+    try {
+      const response = await fetch(
+        "http://localhost:5000/api/join",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            name: formData.name,
+            email: formData.email,
+            phone: formData.phone,
+            country: formData.country,
+            state: formData.state,
+            city: formData.city,
+            interest: formData.interest,
+            message: formData.message,
+          }),
+        }
+      )
 
-    setFormData({
-      name: "",
-      email: "",
-      countryCode: "+91",
-      phone: "",
-      country: "India",
-      state: "",
-      city: "",
-      interest: "",
-      message: "",
-    })
+      const data = await response.json()
 
-    setErrors({})
+      if (!response.ok) {
+        throw new Error(
+          data.message || "Failed to submit application."
+        )
+      }
 
-    setTimeout(() => {
-      setSubmitted(false)
-    }, 5000)
+      console.log(
+        "Volunteer Application:",
+        data.application
+      )
+
+      setSubmitted(true)
+
+      setFormData({
+        name: "",
+        email: "",
+        countryCode: "+91",
+        phone: "",
+        country: "India",
+        state: "",
+        city: "",
+        interest: "",
+        message: "",
+      })
+
+      setErrors({})
+
+      setTimeout(() => {
+        setSubmitted(false)
+      }, 5000)
+    } catch (error) {
+      console.error(
+        "Join Team submission failed:",
+        error
+      )
+
+      setErrors({
+        submit:
+          "Unable to submit your application. Please try again.",
+      })
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -266,6 +326,7 @@ function JoinTeam() {
       {/* =====================================================
           HERO SECTION
       ====================================================== */}
+
       <section
         className="relative bg-green-950 bg-cover bg-center px-6 py-20 text-white"
         style={{
@@ -273,6 +334,7 @@ function JoinTeam() {
         }}
       >
         {/* Dark overlay */}
+
         <div className="absolute inset-0 bg-black/55" />
 
         <div className="relative z-10 mx-auto max-w-6xl text-center">
@@ -297,7 +359,9 @@ function JoinTeam() {
       {/* =====================================================
           BENEFITS SECTION
       ====================================================== */}
+
       <section className="px-6 py-16">
+
         <div className="mx-auto max-w-6xl">
 
           <div className="mb-12 text-center">
@@ -320,6 +384,7 @@ function JoinTeam() {
           <div className="grid gap-6 md:grid-cols-3">
 
             {/* Card 1 */}
+
             <div className="rounded-2xl bg-white p-8 text-center shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-lg">
 
               <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-green-100 text-2xl text-green-700">
@@ -338,6 +403,7 @@ function JoinTeam() {
             </div>
 
             {/* Card 2 */}
+
             <div className="rounded-2xl bg-white p-8 text-center shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-lg">
 
               <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-green-100 text-2xl text-green-700">
@@ -356,6 +422,7 @@ function JoinTeam() {
             </div>
 
             {/* Card 3 */}
+
             <div className="rounded-2xl bg-white p-8 text-center shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-lg">
 
               <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-green-100 text-2xl text-green-700">
@@ -381,12 +448,15 @@ function JoinTeam() {
       {/* =====================================================
           FORM SECTION
       ====================================================== */}
+
       <section className="px-6 pb-20">
+
         <div className="mx-auto max-w-4xl">
 
           <div className="rounded-3xl bg-white p-6 shadow-lg md:p-10">
 
             {/* Form Header */}
+
             <div className="mb-8">
 
               <p className="mb-2 text-sm font-semibold uppercase tracking-widest text-green-700">
@@ -404,7 +474,36 @@ function JoinTeam() {
 
             </div>
 
+            {/* Backend Error Message */}
+
+            {errors.submit && (
+              <div className="mb-8 rounded-xl border border-red-200 bg-red-50 p-4">
+
+                <div className="flex items-start gap-3">
+
+                  <div className="mt-0.5 text-xl text-red-600">
+                    !
+                  </div>
+
+                  <div>
+
+                    <h3 className="font-semibold text-red-800">
+                      Submission Failed
+                    </h3>
+
+                    <p className="mt-1 text-sm text-red-700">
+                      {errors.submit}
+                    </p>
+
+                  </div>
+
+                </div>
+
+              </div>
+            )}
+
             {/* Success Message */}
+
             {submitted && (
               <div className="mb-8 rounded-xl border border-green-200 bg-green-50 p-4">
 
@@ -434,15 +533,18 @@ function JoinTeam() {
             )}
 
             {/* Form */}
+
             <form
               onSubmit={handleSubmit}
               className="space-y-6"
             >
 
               {/* NAME + EMAIL */}
+
               <div className="grid gap-6 md:grid-cols-2">
 
                 {/* Full Name */}
+
                 <div>
 
                   <label
@@ -476,6 +578,7 @@ function JoinTeam() {
                 </div>
 
                 {/* Email */}
+
                 <div>
 
                   <label
@@ -511,9 +614,11 @@ function JoinTeam() {
               </div>
 
               {/* COUNTRY + PHONE */}
+
               <div className="grid gap-6 md:grid-cols-2">
 
                 {/* Country */}
+
                 <div>
 
                   <label
@@ -555,6 +660,7 @@ function JoinTeam() {
                 </div>
 
                 {/* Phone Number */}
+
                 <div>
 
                   <label
@@ -574,6 +680,7 @@ function JoinTeam() {
                   >
 
                     {/* Country Code */}
+
                     <div className="relative flex w-[78px] shrink-0 items-center border-r border-gray-200 bg-gray-50">
 
                       <select
@@ -593,6 +700,7 @@ function JoinTeam() {
                     </div>
 
                     {/* Phone Input */}
+
                     <input
                       id="phone"
                       type="tel"
@@ -618,9 +726,11 @@ function JoinTeam() {
               </div>
 
               {/* STATE + CITY */}
+
               <div className="grid gap-6 md:grid-cols-2">
 
                 {/* State */}
+
                 <div>
 
                   <label
@@ -658,7 +768,6 @@ function JoinTeam() {
                           {state}
                         </option>
                       ))}
-
                     </select>
 
                     <FaChevronDown className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-sm text-gray-400" />
@@ -674,6 +783,7 @@ function JoinTeam() {
                 </div>
 
                 {/* City */}
+
                 <div>
 
                   <label
@@ -714,7 +824,6 @@ function JoinTeam() {
                           {city}
                         </option>
                       ))}
-
                     </select>
 
                     <FaChevronDown className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-sm text-gray-400" />
@@ -732,6 +841,7 @@ function JoinTeam() {
               </div>
 
               {/* AREA OF INTEREST */}
+
               <div>
 
                 <label
@@ -786,7 +896,6 @@ function JoinTeam() {
                     <option value="Events">
                       Events & Campaigns
                     </option>
-
                   </select>
 
                   <FaChevronDown className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-sm text-gray-400" />
@@ -802,6 +911,7 @@ function JoinTeam() {
               </div>
 
               {/* MESSAGE */}
+
               <div>
 
                 <div className="mb-2 flex items-center justify-between">
@@ -810,7 +920,7 @@ function JoinTeam() {
                     htmlFor="message"
                     className="block text-sm font-semibold text-gray-700"
                   >
-                    Why do you want to join us?{" "}
+                    Why do you want to join?{" "}
                     <span className="text-red-500">*</span>
                   </label>
 
@@ -844,18 +954,23 @@ function JoinTeam() {
               </div>
 
               {/* SUBMIT BUTTON */}
+
               <div className="pt-2">
 
                 <button
                   type="submit"
-                  className="w-full rounded-xl bg-green-800 px-6 py-3.5 text-base font-semibold text-white shadow-sm transition hover:bg-green-900 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+                  disabled={submitting}
+                  className="w-full rounded-xl bg-green-800 px-6 py-3.5 text-base font-semibold text-white shadow-sm transition hover:bg-green-900 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-70"
                 >
-                  Submit Volunteer Application
+                  {submitting
+                    ? "Submitting Application..."
+                    : "Submit Volunteer Application"}
                 </button>
 
               </div>
 
               {/* Privacy Text */}
+
               <p className="text-center text-xs leading-relaxed text-gray-500">
                 By submitting this form, you agree to be contacted
                 regarding your volunteer application and WildGuard

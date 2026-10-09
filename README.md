@@ -4,7 +4,7 @@
 
 WildGuard India is a full-stack wildlife conservation website built to make wildlife information, conservation programs, environmental initiatives, and ways to get involved easier to explore.
 
-The project combines a responsive React frontend with a Node.js/Express backend and MongoDB Atlas database. It also includes form validation, state management, charts, reusable components, routing, automated tests, and production deployment.
+The project combines a responsive React frontend with a Node.js/Express backend and MongoDB Atlas database. Wildlife, program, and blog content is loaded from Google Apps Script web app endpoints. It also includes form validation, state management, charts, reusable components, routing, automated tests, and production deployment.
 
 ---
 
@@ -29,7 +29,7 @@ The website is structured as a complete web application with:
 - Redux Toolkit for application state
 - React Router for navigation
 - Responsive Tailwind CSS styling
-- Wildlife, program, and blog data services
+- Wildlife, program, and blog data services powered by Google Apps Script endpoints
 - Data visualization with Recharts
 - A Node.js/Express backend
 - MongoDB Atlas database integration
@@ -59,7 +59,7 @@ It contains:
 
 ## 🐅 Wildlife
 
-The Wildlife section focuses on exploring wildlife species and their conservation status.
+The Wildlife section focuses on exploring wildlife species and their conservation status. Wildlife data is fetched through `wildlifeService.js` from a Google Apps Script web app.
 
 Features include:
 
@@ -82,7 +82,7 @@ Routes:
 
 ## 🌱 Programs
 
-The Programs section presents conservation programs in an organized format.
+The Programs section presents conservation programs in an organized format. Program data is fetched through `programService.js` from a Google Apps Script web app.
 
 Users can:
 
@@ -101,7 +101,7 @@ Routes:
 
 ## 📰 Blog
 
-The Blog section contains wildlife and conservation-related articles.
+The Blog section contains wildlife and conservation-related articles. Blog data is fetched through `blogService.js` from a Google Apps Script web app.
 
 Features include:
 
@@ -215,7 +215,11 @@ and stored in MongoDB Atlas.
 
 ### Database
 
-- MongoDB Atlas
+- MongoDB Atlas (form submissions)
+
+### Content Data Source
+
+- Google Apps Script web apps (wildlife, programs, and blog data)
 
 ### Testing
 
@@ -234,7 +238,10 @@ and stored in MongoDB Atlas.
 
 # 🏗️ Project Architecture
 
-The production application follows:
+The production application uses two data paths:
+
+- **Content data** (wildlife, programs, blogs): the React frontend fetches it directly from Google Apps Script endpoints.
+- **Form data** (Join Team, Contact): the React frontend sends it to the Express backend, which stores it in MongoDB Atlas.
 
 ```text
                          ┌───────────────────┐
@@ -247,29 +254,30 @@ The production application follows:
                          │      Vercel       │
                          │ React + Vite      │
                          │    Frontend       │
-                         └─────────┬─────────┘
-                                   │
-                              API Requests
-                                   │
-                                   ▼
-                         ┌───────────────────┐
-                         │      Render       │
-                         │ Node + Express    │
-                         │     Backend       │
-                         └─────────┬─────────┘
-                                   │
-                              Mongoose
-                                   │
-                                   ▼
-                         ┌───────────────────┐
-                         │  MongoDB Atlas    │
-                         │     Database      │
-                         └───────────────────┘
+                         └────┬─────────┬────┘
+                              │         │
+              GET (content)   │         │   POST (forms)
+                              ▼         ▼
+        ┌───────────────────────┐     ┌───────────────────┐
+        │  Google Apps Script   │     │      Render       │
+        │  Web App Endpoints    │     │ Node + Express    │
+        │ Wildlife/Programs/Blog│     │     Backend       │
+        └───────────────────────┘     └─────────┬─────────┘
+                                                │
+                                           Mongoose
+                                                │
+                                                ▼
+                                      ┌───────────────────┐
+                                      │  MongoDB Atlas    │
+                                      │     Database      │
+                                      └───────────────────┘
 ```
 
 In simple terms:
 
-**GitHub → Vercel → Render → MongoDB Atlas**
+**Content:** Google Apps Script → React frontend (Vercel)
+
+**Forms:** GitHub → Vercel → Render → MongoDB Atlas
 
 ---
 
@@ -338,6 +346,46 @@ wildguard/
 
 ---
 
+# 🔌 Data Services (Frontend)
+
+Wildlife, program, and blog data is loaded by three small service files in `src/services/`. Each one uses Axios to send a `GET` request to a Google Apps Script web app URL and returns the response data to the Redux slices.
+
+| Service file | Function | Data source | Used by |
+| --- | --- | --- | --- |
+| `wildlifeService.js` | `fetchWildlife()` | Wildlife Apps Script endpoint | `wildlifeSlice.js` |
+| `programService.js` | `fetchPrograms()` | Programs Apps Script endpoint | `programSlice.js` |
+| `blogService.js` | `fetchBlogs()` | Blog Apps Script endpoint | `blogSlice.js` |
+
+Example (`wildlifeService.js`):
+
+```javascript
+import axios from "axios"
+
+const WILDLIFE_API_URL = "<your Google Apps Script web app URL>"
+
+export const fetchWildlife = async () => {
+  const response = await axios.get(WILDLIFE_API_URL)
+
+  return response.data
+}
+```
+
+Data flow:
+
+```text
+Google Apps Script endpoint
+          ↓
+   Service file (Axios GET)
+          ↓
+ Redux Toolkit slice
+          ↓
+ Pages and components
+```
+
+To point the site at a different data source, update the URL constant in the matching service file.
+
+---
+
 # 🔌 Backend API
 
 Production base URL:
@@ -345,6 +393,8 @@ Production base URL:
 ```text
 https://wildguard-m4j5.onrender.com
 ```
+
+The Express backend handles form submissions only. Wildlife, program, and blog content does not go through this backend.
 
 ### Join Team
 
@@ -374,7 +424,7 @@ Returns a simple response confirming that the WildGuard backend is running.
 
 # 🗄️ Database
 
-WildGuard uses **MongoDB Atlas** with Mongoose.
+WildGuard uses **MongoDB Atlas** with Mongoose to store form submissions.
 
 Current application collections include:
 
@@ -408,6 +458,8 @@ Stores:
 - Subject
 - Message
 - Created/updated timestamps
+
+> Wildlife, program, and blog content is **not** stored in MongoDB. It is served by the Google Apps Script endpoints described above.
 
 ---
 
@@ -491,6 +543,8 @@ npm run dev
 ```
 
 Vite will display the local frontend URL.
+
+The wildlife, program, and blog pages load their data from the Google Apps Script endpoints configured in `src/services/`, so an internet connection is required even when running locally.
 
 ---
 
@@ -623,6 +677,12 @@ Basic security practices used include:
 - Backend API separated from the frontend
 - CORS configured on Express
 - User input validated before submission
+- Content endpoints are read-only `GET` requests
+
+Notes on the Google Apps Script endpoints:
+
+- The web app URLs are called from the browser, so they are visible in the deployed frontend code. They should only expose data that is meant to be public.
+- Write access to the underlying data should stay restricted to the project owner.
 
 Production credentials should always remain private.
 
@@ -636,6 +696,7 @@ The final production setup is:
 Frontend  → Vercel
 Backend   → Render
 Database  → MongoDB Atlas
+Content   → Google Apps Script web apps
 Code      → GitHub
 ```
 
@@ -653,7 +714,11 @@ https://wildguard-m4j5.onrender.com
 
 ### MongoDB Atlas
 
-Production database used by the backend.
+Production database used by the backend for form submissions.
+
+### Google Apps Script
+
+Provides the wildlife, program, and blog data consumed by the frontend. If the content endpoints are redeployed and their URLs change, update the URL constants in `src/services/` and redeploy the frontend.
 
 ### GitHub
 
@@ -681,7 +746,8 @@ Some of the main things I practiced were:
 - Creating routes with React Router
 - Building responsive layouts with Tailwind CSS
 - Handling forms and validation
-- Making API requests
+- Making API requests with Axios
+- Consuming Google Apps Script web apps as a data source
 - Building an Express backend
 - Creating API routes
 - Connecting Express with MongoDB
@@ -716,6 +782,10 @@ and then verifying the same flow after deployment.
 
 The forms were first tested with the local backend and later connected to the deployed Render API so the live Vercel application could submit data successfully.
 
+### Content data source
+
+Wildlife, program, and blog content is served through Google Apps Script web apps and loaded by dedicated service files. Each data source is isolated in its own service, so an endpoint URL can be changed without touching pages or components.
+
 ### MongoDB connection
 
 MongoDB Atlas was configured as the production database, with the connection string kept in an environment variable.
@@ -729,7 +799,7 @@ Vercel → React frontend
 Render → Express backend
 ```
 
-The frontend was then configured to communicate with the production backend.
+The frontend was then configured to communicate with the production backend and the content endpoints.
 
 ### GitHub Pages
 
@@ -757,6 +827,9 @@ Possible future additions include:
 - Wildlife management
 - Program management
 - Blog management
+- Moving wildlife, program, and blog content from Google Apps Script to the Express/MongoDB backend
+- Storing endpoint URLs in Vite environment variables (for example `VITE_WILDLIFE_API_URL`)
+- Caching content responses to reduce load time
 - Interactive wildlife maps
 - More advanced wildlife filtering
 - Habitat information
@@ -777,6 +850,7 @@ Possible future additions include:
 ✓ Redux Toolkit state management
 ✓ React Router navigation
 ✓ Tailwind CSS
+✓ Google Apps Script content endpoints
 ✓ Wildlife search and filtering
 ✓ Wildlife detail pages
 ✓ Charts and data visualization
